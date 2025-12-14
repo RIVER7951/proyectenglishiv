@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Master: Grammar Edition</title>
+    <style>
+        /* --- ESTILOS VISUALES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@500;700&display=swap');
+
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #0aff0a;
+            --neon-red: #ff3131;
+            --neon-orange: #ff9100;
+            --dark-bg: #050510;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--dark-bg);
+            font-family: 'Rajdhani', sans-serif;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: radial-gradient(circle at 50% 50%, #1a1c29 0%, #000 100%);
+            user-select: none;
+        }
+
+        .game-card {
+            width: 95%;
+            max-width: 900px;
+            background: rgba(20, 20, 35, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            transition: all 0.5s;
+            overflow: hidden;
+        }
+
+        /* Efecto de daño */
+        .damage-effect {
+            animation: shakeRed 0.5s ease-in-out;
+            box-shadow: inset 0 0 100px red;
+            border-color: red;
+        }
+        @keyframes shakeRed {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-10px, 10px); }
+            40% { transform: translate(10px, -10px); }
+            60% { transform: translate(-10px, -10px); }
+            80% { transform: translate(10px, 10px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* Modo Fuego */
+        .fire-mode {
+            border: 2px solid var(--neon-red);
+            box-shadow: 0 0 60px var(--neon-red);
+            background: rgba(30, 5, 5, 0.95);
+        }
+
+        h1 {
+            font-family: 'Black Ops One', cursive;
+            font-size: 2.5rem;
+            margin: 0 0 15px 0;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+        }
+
+        /* --- PANTALLAS --- */
+        .screen { display: none; flex-direction: column; align-items: center; width: 100%; animation: fadeIn 0.5s; }
+        .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* INTRO */
+        .theory-box {
+            text-align: left; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 10px;
+            border-left: 5px solid var(--neon-green); margin-bottom: 20px; font-size: 1.1rem; line-height: 1.6; width: 100%; max-width: 600px;
+        }
+        .theory-title { color: var(--neon-green); font-size: 1.3rem; font-weight: bold; margin-bottom: 5px; }
+        .highlight { color: var(--neon-blue); font-weight: bold; }
+        .example { color: #ddd; display: block; margin-top: 2px; margin-left: 10px; padding-left: 10px; border-left: 2px solid #555; font-style: italic; }
+        .example b { color: var(--neon-orange); }
+
+        /* QUIZ */
+        .hud { display: flex; justify-content: space-between; width: 100%; margin-bottom: 15px; font-size: 1.2rem; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .question-text { font-size: 1.6rem; margin: 20px 0; font-weight: 700; min-height: 60px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        button.opt-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 20px; font-size: 1.1rem; border-radius: 10px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: bold; transition: 0.2s; }
+        button.opt-btn:hover { background: rgba(0, 243, 255, 0.2); border-color: var(--neon-blue); transform: scale(1.02); }
+        .correct { background: linear-gradient(90deg, #00b09b, #96c93d) !important; color: white; border-color: white !important; }
+        .wrong { background: linear-gradient(90deg, #ff416c, #ff4b2b) !important; opacity: 0.5; }
+
+        /* LABERINTOS */
+        #maze-container, #maze-fire-container {
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px;
+            background: #111; padding: 5px; margin: 10px 0; width: 300px; height: 300px;
+        }
+        #maze-container { border: 2px solid var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); }
+        #maze-fire-container { border: 3px solid var(--neon-red); box-shadow: 0 0 30px var(--neon-orange); background: #220000; }
+        .cell { width: 100%; height: 100%; background: #222; position: relative; display: flex; align-items: center; justify-content: center; }
+        .wall { background: #555; }
+        .fire-wall { background: #600; box-shadow: inset 0 0 5px #f00; }
+        .player { background: var(--neon-blue); border-radius: 50%; width: 70%; height: 70%; box-shadow: 0 0 10px var(--neon-blue); z-index: 10; transition: all 0.1s; }
+        .player-fire { background: var(--neon-orange); border-radius: 50%; width: 70%; height: 70%; box-shadow: 0 0 15px var(--neon-red); z-index: 10; transition: all 0.1s; }
+        .exit-gate { background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 8px; font-weight: 800; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.3); cursor: default; }
+        .d-pad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top: 10px; }
+        .d-btn { background: rgba(255,255,255,0.1); border: 1px solid #fff; color: white; padding: 15px; font-size: 1.5rem; border-radius: 5px; cursor: pointer; }
+
+        /* SYNTAX REPAIR */
+        .lives-box { font-size: 1.5rem; color: var(--neon-red); letter-spacing: 5px; margin-bottom: 10px; }
+        .syntax-area { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; min-height: 50px; }
+        .word-bubble { background: var(--neon-blue); color: #000; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        .word-slot { border-bottom: 2px solid #555; width: auto; min-width: 60px; padding: 0 10px; margin: 0 5px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--neon-green); font-weight: bold; font-size: 1.2rem; }
+
+        /* BOTÓN */
+        .action-btn { background: var(--neon-blue); color: #000; border: none; padding: 15px 40px; font-size: 1.3rem; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px; box-shadow: 0 0 20px var(--neon-blue); transition: 0.3s; }
+        .action-btn:hover { background: white; transform: scale(1.1); }
+
+        /* ANIMACIONES FINALES */
+        #ending-scene { width: 100%; height: 200px; position: relative; margin-bottom: 20px; border-radius: 10px; overflow: hidden; display: flex; justify-content: center; align-items: flex-end; }
+        .heaven-bg { background: linear-gradient(to top, #87CEEB, #fff); }
+        .stairs-visual { position: absolute; bottom: 0; width: 100px; height: 100%; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.5), rgba(255,255,255,0.5) 10px, transparent 10px, transparent 20px); }
+        .stickman-up { font-size: 4rem; position: absolute; bottom: 0; animation: climbUp 4s forwards linear; }
+        @keyframes climbUp { 0% { bottom: 0; opacity: 1; transform: scale(1); } 100% { bottom: 100%; opacity: 0; transform: scale(0.5); } }
+        .hell-bg { background: linear-gradient(to bottom, #220000, #ff4500); }
+        .fire-visual { position: absolute; bottom: 0; width: 100%; font-size: 3rem; text-align: center; animation: flicker 0.2s infinite; }
+        .stickman-down { font-size: 4rem; position: absolute; top: -50px; animation: fallDown 3s forwards ease-in; }
+        @keyframes fallDown { 0% { top: -50px; transform: rotate(0deg); } 100% { top: 150px; transform: rotate(720deg); } }
+        @keyframes flicker { 0% { opacity: 0.8; } 100% { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-card" id="main-card">
+        
+        <div id="screen-intro" class="screen active">
+            <h1>English Master</h1>
+            <div class="theory-box">
+                <div class="theory-title">1. Past Progressive</div>
+                <p style="margin:0; font-size:0.9rem; color:#aaa;">Action in progress (Was/Were + Ing)</p>
+                <span class="example">➜ "I <b>was watching</b> TV."</span>
+                <span class="example">➜ "They <b>were playing</b> soccer."</span>
+                
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+                
+                <div class="theory-title">2. Simple Past (Regular)</div>
+                <p style="margin:0; font-size:0.9rem; color:#aaa;">Finished action (Verb + ED)</p>
+                <span class="example">➜ "He <b>cooked</b> dinner."</span>
+                <span class="example">➜ "We <b>visited</b> the museum."</span>
+            </div>
+            <button class="action-btn" onclick="nextPhase()">START GAME</button>
+        </div>
+
+        <div id="screen-quiz" class="screen">
+            <h1>Grammar Check</h1>
+            <div class="hud">
+                <span>Phase: <span id="level-txt">1</span></span>
+                <span>Score: <span id="score-val" style="color:var(--neon-green)">0</span></span>
+            </div>
+            <div class="question-text" id="question-text">Loading...</div>
+            <div class="options-grid" id="options-container"></div>
+        </div>
+
+        <div id="screen-maze-1" class="screen">
+            <h1 style="color: var(--neon-blue);">FACTORY SECTOR</h1>
+            <p style="color: #ccc; margin:0 0 10px 0;">Find the past of <strong>"BUILD"</strong></p>
+            <div id="maze-container"></div>
+            <p id="maze-1-msg" style="color: #ff416c; height: 20px; font-weight: bold;"></p>
+            <div class="d-pad">
+                <div></div><button class="d-btn" onclick="movePlayer1(0,-1)">▲</button><div></div>
+                <button class="d-btn" onclick="movePlayer1(-1,0)">◄</button>
+                <button class="d-btn" onclick="movePlayer1(0,1)">▼</button>
+                <button class="d-btn" onclick="movePlayer1(1,0)">►</button>
+            </div>
+        </div>
+
+        <div id="screen-syntax-1" class="screen">
+            <h1>SYNTAX REPAIR 1</h1>
+            <div class="lives-box" id="lives-1">❤️❤️❤️</div>
+            <p style="color: #ccc;">Order the words (3 Chances):</p>
+            <div id="slots-1" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
+            <div id="pool-1" class="syntax-area"></div>
+            <p id="feed-1" style="height: 20px; font-weight: bold; color: var(--neon-green);"></p>
+        </div>
+
+        <div id="screen-maze-2" class="screen">
+            <h1 style="color: var(--neon-red); text-shadow: 0 0 10px orange;">INFERNO SECTOR</h1>
+            <p style="color: #ff9100; margin:0 0 10px 0;">Find the past of <strong>"BUY"</strong></p>
+            <div id="maze-fire-container"></div>
+            <p id="maze-2-msg" style="color: #ff9100; height: 20px; font-weight: bold;"></p>
+            <div class="d-pad">
+                <div></div><button class="d-btn" onclick="movePlayer2(0,-1)">▲</button><div></div>
+                <button class="d-btn" onclick="movePlayer2(-1,0)">◄</button>
+                <button class="d-btn" onclick="movePlayer2(0,1)">▼</button>
+                <button class="d-btn" onclick="movePlayer2(1,0)">►</button>
+            </div>
+        </div>
+
+        <div id="screen-syntax-2" class="screen">
+            <h1>SYNTAX REPAIR 2</h1>
+            <div class="lives-box" id="lives-2">❤️❤️❤️</div>
+            <p style="color: #ccc;">Order the words (3 Chances):</p>
+            <div id="slots-2" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
+            <div id="pool-2" class="syntax-area"></div>
+            <p id="feed-2" style="height: 20px; font-weight: bold; color: var(--neon-green);"></p>
+        </div>
+
+        <div id="screen-end" class="screen">
+            <h1>MISSION COMPLETE</h1>
+            <div id="ending-scene"></div>
+            <h2 style="font-size: 3rem; color: var(--neon-green); margin: 10px 0;" id="final-score">0</h2>
+            <p id="final-msg" style="font-size: 1.2rem;">Calculating results...</p>
+            <button class="action-btn" onclick="location.reload()">PLAY AGAIN</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- AUDIO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if(type==='win') { 
+                osc.type='triangle'; osc.frequency.setValueAtTime(600,audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.3); 
+            } else if(type==='error') { 
+                osc.type='sawtooth'; osc.frequency.setValueAtTime(100,audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.3); 
+            } else if(type==='scream') {
+                // Sonido de Grito / Caída
+                osc.type='sawtooth'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 1.5);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 1.5);
+                return;
+            } else { 
+                osc.type='sine'; osc.frequency.setValueAtTime(200,audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.1); 
+            }
+            osc.start(); osc.stop(audioCtx.currentTime+0.3);
+        }
+
+        // --- GAME STATE ---
+        let score = 0;
+        let qIndex = 0;
+        let lives = 3;
+        let state = { intro:false, quiz1:false, maze1:false, quiz2:false, syn1:false, maze2:false, syn2:false };
+
+        // --- GRAMMAR ONLY QUESTIONS ---
+        const quizBank = [
+            // PHASE 1 (Grammar Basics)
+            {q:"Grammar: Past Progressive Structure", a:[{t:"Was/Were + Ing",c:true},{t:"Did + Verb",c:false},{t:"Had + Ed",c:false},{t:"Am + Ing",c:false}]},
+            {q:"Grammar: 'I ______ (study) at 8 PM.'", a:[{t:"Was studying",c:true},{t:"Were studying",c:false},{t:"Studied",c:false},{t:"Am studying",c:false}]},
+            {q:"Simple Past (Regular): 'She ______ (cook) dinner.'", a:[{t:"Cooked",c:true},{t:"Cooking",c:false},{t:"Cook",c:false},{t:"Cooks",c:false}]},
+            {q:"Negative Progressive: 'We ______ (not/play).'", a:[{t:"Weren't playing",c:true},{t:"Didn't playing",c:false},{t:"Wasn't playing",c:false},{t:"Not play",c:false}]},
+            {q:"Connector: '______ I was walking, it started to rain.'", a:[{t:"While",c:true},{t:"When",c:false},{t:"Who",c:false},{t:"Where",c:false}]},
+            
+            // PHASE 2 (Advanced Grammar)
+            {q:"Interruption: 'I was eating ______ the phone rang.'", a:[{t:"When",c:true},{t:"While",c:false},{t:"What",c:false},{t:"Who",c:false}]},
+            {q:"Question: '______ you watching TV?'", a:[{t:"Were",c:true},{t:"Did",c:false},{t:"Was",c:false},{t:"Are",c:false}]},
+            {q:"Simple Past Question: '______ you call me?'", a:[{t:"Did",c:true},{t:"Were",c:false},{t:"Was",c:false},{t:"Do",c:false}]},
+            {q:"Spelling: -ING of 'Swim'", a:[{t:"Swimming",c:true},{t:"Swiming",c:false},{t:"Swimying",c:false},{t:"Swaming",c:false}]},
+            {q:"Negative Simple Past: 'I ______ (not/finish) the test.'", a:[{t:"Didn't finish",c:true},{t:"Wasn't finish",c:false},{t:"Didn't finished",c:false},{t:"Not finish",c:false}]}
+        ];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function nextPhase() {
+            if(!state.intro) { state.intro=true; loadQuiz(); }
+            else if(!state.quiz1) {
+                if(qIndex>=5) { state.quiz1=true; initMaze1(); }
+                else loadQuiz();
+            } else if(!state.maze1) {
+                state.maze1=true; loadQuiz();
+            } else if(!state.quiz2) {
+                if(qIndex>=10) { state.quiz2=true; initSyntax1(); }
+                else loadQuiz();
+            } else if(!state.syn1) {
+                state.syn1=true; initMaze2();
+            } else if(!state.maze2) {
+                state.maze2=true; initSyntax2();
+            } else if(!state.syn2) {
+                state.syn2=true; showEnd();
+            }
+        }
+
+        // --- QUIZ LOGIC ---
+        function loadQuiz() {
+            showScreen('screen-quiz');
+            const d = quizBank[qIndex];
+            document.getElementById('question-text').innerText = `${qIndex+1}. ${d.q}`;
+            document.getElementById('level-txt').innerText = qIndex<5 ? "1" : "2";
+            const g = document.getElementById('options-container'); g.innerHTML="";
+            const answers = [...d.a];
+            shuffleArray(answers);
+            answers.forEach(ans => {
+                const b = document.createElement('button'); b.className='opt-btn'; b.innerText=ans.t;
+                b.onclick = ()=>checkQuiz(b, ans.c);
+                g.appendChild(b);
+            });
+        }
+        function checkQuiz(btn, ok) {
+            const all = document.querySelectorAll('.opt-btn'); all.forEach(b=>b.disabled=true);
+            if(ok) { playSound('win'); btn.classList.add('correct'); score+=100; document.getElementById('score-val').innerText=score; }
+            else { playSound('error'); btn.classList.add('wrong'); }
+            setTimeout(()=>{qIndex++; nextPhase()}, 1200);
+        }
+
+        // --- LABERINTO FAIL ---
+        function triggerScreamAndFail(mazeKeyHandler) {
+            playSound('scream');
+            document.getElementById('main-card').classList.add('damage-effect');
+            if(mazeKeyHandler) document.removeEventListener('keydown', mazeKeyHandler);
+            if(document.getElementById('maze-1-msg')) document.getElementById('maze-1-msg').innerText = "FATAL ERROR! ADVANCING...";
+            if(document.getElementById('maze-2-msg')) document.getElementById('maze-2-msg').innerText = "FATAL ERROR! ADVANCING...";
+            setTimeout(() => {
+                document.getElementById('main-card').classList.remove('damage-effect');
+                document.getElementById('main-card').classList.remove('fire-mode');
+                nextPhase();
+            }, 2000);
+        }
+
+        // --- LABERINTO 1 (BUILD) ---
+        let p1X=0, p1Y=0;
+        const maze1 = [
+            [0,0,0,1,0,0,0,0,0,0],
+            [1,1,0,1,0,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,1,0],
+            [0,1,1,1,1,1,0,1,1,0],
+            [0,0,0,0,0,1,0,0,0,0],
+            [1,1,1,1,0,1,1,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,1,1,1,1,1,0,1,1,0],
+            [0,1,2,1,9,1,3,1,0,0], 
+            [0,0,0,0,0,0,0,0,0,0]
+        ];
+        function initMaze1() { showScreen('screen-maze-1'); p1X=0; p1Y=0; drawMaze1(); document.addEventListener('keydown', key1); }
+        function drawMaze1() {
+            const c=document.getElementById('maze-container'); c.innerHTML="";
+            for(let y=0; y<10; y++){
+                for(let x=0; x<10; x++){
+                    const d=document.createElement('div'); d.className='cell';
+                    if(maze1[y][x]===1) d.classList.add('wall');
+                    else if(maze1[y][x]===9) d.innerHTML="<div class='exit-gate'>BUILT</div>";
+                    else if(maze1[y][x]===2) d.innerHTML="<div class='exit-gate'>BUILDED</div>";
+                    else if(maze1[y][x]===3) d.innerHTML="<div class='exit-gate'>BUILDING</div>";
+                    if(x===p1X && y===p1Y) { const p=document.createElement('div'); p.className='player'; d.appendChild(p); }
+                    c.appendChild(d);
+                }
+            }
+        }
+        function moveP1(dx, dy) {
+            let nx=p1X+dx, ny=p1Y+dy;
+            if(nx>=0 && nx<10 && ny>=0 && ny<10 && maze1[ny][nx]!==1) {
+                let v=maze1[ny][nx];
+                if(v===2||v===3) { triggerScreamAndFail(key1); }
+                else if(v===9) { playSound('win'); score+=300; document.getElementById('score-val').innerText=score; document.removeEventListener('keydown', key1); nextPhase(); }
+                else { p1X=nx; p1Y=ny; playSound('step'); drawMaze1(); }
+            }
+        }
+        function key1(e){ if(e.key==="ArrowUp")moveP1(0,-1); if(e.key==="ArrowDown")moveP1(0,1); if(e.key==="ArrowLeft")moveP1(-1,0); if(e.key==="ArrowRight")moveP1(1,0); }
+        window.movePlayer1 = moveP1;
+
+        // --- LABERINTO 2 (BUY - FUEGO) ---
+        let p2X=0, p2Y=0;
+        const maze2 = [
+            [0,0,0,0,0,0,0,0,0,2], 
+            [0,1,1,1,1,1,1,1,0,0],
+            [0,1,0,0,0,0,0,0,0,0],
+            [0,1,0,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0], 
+            [1,1,1,1,1,1,0,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,1,1,1,1,1,0,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0],
+            [3,0,1,1,1,1,1,1,0,9]
+        ];
+        function initMaze2() {
+            showScreen('screen-maze-2'); document.getElementById('main-card').classList.add('fire-mode');
+            p2X=0; p2Y=0; drawMaze2(); document.addEventListener('keydown', key2);
+        }
+        function drawMaze2() {
+            const c=document.getElementById('maze-fire-container'); c.innerHTML="";
+            for(let y=0; y<10; y++){
+                for(let x=0; x<10; x++){
+                    const d=document.createElement('div'); d.className='cell';
+                    if(maze2[y][x]===1) d.classList.add('wall','fire-wall');
+                    else if(maze2[y][x]===9) d.innerHTML="<div class='exit-gate'>BOUGHT</div>";
+                    else if(maze2[y][x]===2) d.innerHTML="<div class='exit-gate'>BUYED</div>";
+                    else if(maze2[y][x]===3) d.innerHTML="<div class='exit-gate'>BUYING</div>";
+                    if(x===p2X && y===p2Y) { const p=document.createElement('div'); p.className='player-fire'; d.appendChild(p); }
+                    c.appendChild(d);
+                }
+            }
+        }
+        function moveP2(dx, dy) {
+            let nx=p2X+dx, ny=p2Y+dy;
+            if(nx>=0 && nx<10 && ny>=0 && ny<10 && maze2[ny][nx]!==1) {
+                let v=maze2[ny][nx];
+                if(v===2||v===3) { triggerScreamAndFail(key2); }
+                else if(v===9) { playSound('win'); score+=500; document.getElementById('score-val').innerText=score; document.removeEventListener('keydown', key2); document.getElementById('main-card').classList.remove('fire-mode'); nextPhase(); }
+                else { p2X=nx; p2Y=ny; playSound('step'); drawMaze2(); }
+            }
+        }
+        function key2(e){ if(e.key==="ArrowUp")moveP2(0,-1); if(e.key==="ArrowDown")moveP2(0,1); if(e.key==="ArrowLeft")moveP2(-1,0); if(e.key==="ArrowRight")moveP2(1,0); }
+        window.movePlayer2 = moveP2;
+
+        // --- SYNTAX REPAIR ---
+        function updateLives(id) {
+            let h = "";
+            for(let i=0; i<lives; i++) h += "❤️";
+            document.getElementById(id).innerText = h;
+        }
+
+        function initSyntax1() { 
+            lives = 3; updateLives('lives-1');
+            showScreen('screen-syntax-1'); 
+            setupSyntax('slots-1','pool-1',{sc:["playing","soccer","They","were","yesterday"],co:["They","were","playing","soccer","yesterday"]}, 'feed-1', 'lives-1'); 
+        }
+        function initSyntax2() { 
+            lives = 3; updateLives('lives-2');
+            showScreen('screen-syntax-2'); 
+            setupSyntax('slots-2','pool-2',{sc:["reading","was","She","book","a"],co:["She","was","reading","a","book"]}, 'feed-2', 'lives-2'); 
+        }
+
+        function setupSyntax(sid, pid, data, fid, lid) {
+            document.getElementById(sid).innerHTML=""; document.getElementById(pid).innerHTML="";
+            let prog = [];
+            data.co.forEach(()=>document.getElementById(sid).appendChild(Object.assign(document.createElement('div'),{className:'word-slot',innerText:'_'})));
+            data.sc.forEach(w=>{
+                const b=document.createElement('div'); b.className='word-bubble'; b.innerText=w;
+                b.onclick=()=> {
+                    if(w===data.co[prog.length]) {
+                        playSound('win'); b.style.visibility='hidden'; prog.push(w);
+                        document.getElementById(sid).children[prog.length-1].innerText=w;
+                        document.getElementById(sid).children[prog.length-1].style.color="#00f3ff";
+                        if(prog.length===data.co.length) { document.getElementById(fid).innerText="REPAIRED!"; score+=300; document.getElementById('score-val').innerText=score; setTimeout(nextPhase,1200); }
+                    } else { 
+                        lives--; updateLives(lid);
+                        if(lives <= 0) { triggerScreamAndFail(null); } 
+                        else { playSound('error'); b.style.background='#ff3131'; setTimeout(()=>b.style.background='#00f3ff',300); }
+                    }
+                };
+                document.getElementById(pid).appendChild(b);
+            });
+        }
+
+        // --- END ---
+        function showEnd() { 
+            showScreen('screen-end'); 
+            document.getElementById('final-score').innerText=score; 
+            const scene = document.getElementById('ending-scene');
+            
+            if(score >= 1500) {
+                scene.className = 'heaven-bg';
+                scene.innerHTML = "<div class='stairs-visual'></div><div class='stickman-up'>🏃‍♂️</div>";
+                document.getElementById('final-msg').innerText = "EXCELLENT! You are ascending!";
+            } else {
+                scene.className = 'hell-bg';
+                scene.innerHTML = "<div class='stickman-down'>😱</div><div class='fire-visual'>🔥🔥🔥</div>";
+                document.getElementById('final-msg').innerText = "GAME OVER. You fell!";
+            }
+        }
+    </script>
+</body>
+</html>
